@@ -113,6 +113,73 @@ def cmd_journal(settings, args) -> int:
     return 0
 
 
+def cmd_doctor(settings, args) -> int:
+    """Run setup/connectivity checks so you can verify a machine in one command."""
+    ok = "\033[32m✓\033[0m"
+    warn = "\033[33m!\033[0m"
+    fail = "\033[31m✗\033[0m"
+    hard_failures = 0
+
+    print("Kalshi consultant — setup check\n")
+    print(f"  config: model={settings.model}  host={settings.kalshi_api_base}")
+    print(f"          journal={settings.journal_db_path}")
+    print(f"          knowledge={settings.knowledge_dir}\n")
+
+    # 1. Anthropic key (needed only for `chat`).
+    if settings.anthropic_api_key:
+        print(f"  {ok} ANTHROPIC_API_KEY is set (needed for `chat`)")
+    else:
+        print(f"  {warn} ANTHROPIC_API_KEY not set — `chat` won't work, everything else will")
+
+    # 2. Kalshi credentials present.
+    if not settings.kalshi_configured:
+        print(f"  {fail} Kalshi credentials missing — set KALSHI_KEY_ID and KALSHI_PRIVATE_KEY_PATH")
+        print("\nSee .env.example. Fix the above and re-run `doctor`.")
+        return 1
+    print(f"  {ok} Kalshi credentials present (key id + private key path)")
+
+    # 3. Private key loads.
+    try:
+        from .kalshi.auth import load_private_key
+        pk = load_private_key(settings.kalshi_private_key_path)
+        print(f"  {ok} private key loads ({pk.key_size}-bit RSA)")
+    except Exception as e:  # noqa: BLE001 - report any load failure
+        print(f"  {fail} private key failed to load: {type(e).__name__}: {str(e)[:120]}")
+        return 1
+
+    client = _make_client(settings)
+
+    # 4. Authenticated request (balance).
+    try:
+        bal = client.get_balance()
+        dollars = bal.get("balance_dollars", bal.get("balance"))
+        print(f"  {ok} Kalshi auth works — account balance: ${dollars}")
+    except Exception as e:  # noqa: BLE001
+        hard_failures += 1
+        msg = getattr(e, "body", str(e))
+        print(f"  {fail} Kalshi auth failed: {str(msg)[:160]}")
+        print(f"      (is KALSHI_API_BASE right? key works only on the host it was created on)")
+
+    # 5. Live market data.
+    try:
+        markets = client.get_markets(status="open", limit=1).get("markets", [])
+        if markets:
+            print(f"  {ok} live market data — sample: {markets[0].get('ticker')}")
+        else:
+            print(f"  {warn} market data request worked but returned no open markets")
+    except Exception as e:  # noqa: BLE001
+        hard_failures += 1
+        print(f"  {fail} market data request failed: {str(getattr(e, 'body', e))[:160]}")
+
+    print()
+    if hard_failures:
+        print(f"{fail} {hard_failures} check(s) failed — see above.")
+        return 1
+    print(f"{ok} All systems go." + ("" if settings.anthropic_api_key
+                                      else " (add ANTHROPIC_API_KEY to enable `chat`)"))
+    return 0
+
+
 def cmd_stats(settings, args) -> int:
     journal = JournalStore(settings.journal_db_path)
     try:
@@ -136,6 +203,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser("chat", help="Interactive consultant")
+    sub.add_parser("doctor", help="Verify setup: credentials, auth, live data")
 
     pm = sub.add_parser("markets", help="List live markets")
     pm.add_argument("--status", default="open")
@@ -169,6 +237,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "chat":
         return cmd_chat(settings, args)
+    if args.command == "doctor":
+        return cmd_doctor(settings, args)
     if args.command == "markets":
         return cmd_markets(settings, args)
     if args.command == "journal":
