@@ -21,7 +21,7 @@ def brier_score(predictions: list[float], outcomes: list[int]) -> float:
         return float("nan")
     if len(predictions) != len(outcomes):
         raise ValueError("predictions and outcomes must be the same length")
-    return sum((p - o) ** 2 for p, o in zip(predictions, outcomes)) / len(predictions)
+    return sum((p - o) ** 2 for p, o in zip(predictions, outcomes, strict=True)) / len(predictions)
 
 
 @dataclass
@@ -48,7 +48,7 @@ def calibration_table(predictions: list[float], outcomes: list[int],
         low, high = i * width, (i + 1) * width
         # Include the top edge in the last bin.
         in_bin = [
-            (p, o) for p, o in zip(predictions, outcomes)
+            (p, o) for p, o in zip(predictions, outcomes, strict=True)
             if (low <= p < high) or (i == n_bins - 1 and p == high)
         ]
         if not in_bin:

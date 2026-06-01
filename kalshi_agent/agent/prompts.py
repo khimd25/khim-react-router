@@ -56,7 +56,7 @@ def _load_knowledge(knowledge_dir: str) -> str:
         if name.endswith((".md", ".txt")):
             path = os.path.join(knowledge_dir, name)
             try:
-                with open(path, "r", encoding="utf-8") as fh:
+                with open(path, encoding="utf-8") as fh:
                     chunks.append(f"## {name}\n{fh.read().strip()}")
             except OSError:
                 continue

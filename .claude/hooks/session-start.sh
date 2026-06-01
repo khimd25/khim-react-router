@@ -27,6 +27,17 @@ fi
 echo "export PATH=\"$VENV/bin:\$PATH\"" >> "$CLAUDE_ENV_FILE"
 echo "export PYTHONPATH=\"$CLAUDE_PROJECT_DIR\"" >> "$CLAUDE_ENV_FILE"
 
+# Lint check — fast, catches syntax errors and import issues.
+echo ""
+echo "Running ruff..."
+"$VENV/bin/ruff" check kalshi_agent/ tests/ && echo "  ruff: all clean" || echo "  ruff: issues found (non-fatal)"
+
+# Test suite — pure-function tests, no network calls.
+echo ""
+echo "Running pytest..."
+"$VENV/bin/pytest" tests/ -q --tb=short 2>&1 | tail -5
+echo ""
+
 # Surface setup status. Credentials live in a gitignored .env (absent in fresh
 # web sessions) or in the environment's configured secrets, so `doctor` flags
 # whatever still needs configuring. Non-fatal — never block session startup.

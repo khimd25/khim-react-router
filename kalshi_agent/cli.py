@@ -143,7 +143,7 @@ def cmd_doctor(settings, args) -> int:
         from .kalshi.auth import load_private_key
         pk = load_private_key(settings.kalshi_private_key_path)
         print(f"  {ok} private key loads ({pk.key_size}-bit RSA)")
-    except Exception as e:  # noqa: BLE001 - report any load failure
+    except Exception as e:
         print(f"  {fail} private key failed to load: {type(e).__name__}: {str(e)[:120]}")
         return 1
 
@@ -154,11 +154,11 @@ def cmd_doctor(settings, args) -> int:
         bal = client.get_balance()
         dollars = bal.get("balance_dollars", bal.get("balance"))
         print(f"  {ok} Kalshi auth works — account balance: ${dollars}")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         hard_failures += 1
         msg = getattr(e, "body", str(e))
         print(f"  {fail} Kalshi auth failed: {str(msg)[:160]}")
-        print(f"      (is KALSHI_API_BASE right? key works only on the host it was created on)")
+        print("      (is KALSHI_API_BASE right? key works only on the host it was created on)")
 
     # 5. Live market data.
     try:
@@ -167,7 +167,7 @@ def cmd_doctor(settings, args) -> int:
             print(f"  {ok} live market data — sample: {markets[0].get('ticker')}")
         else:
             print(f"  {warn} market data request worked but returned no open markets")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         hard_failures += 1
         print(f"  {fail} market data request failed: {str(getattr(e, 'body', e))[:160]}")
 

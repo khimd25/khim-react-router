@@ -36,7 +36,7 @@ def sign_request(private_key: RSAPrivateKey, timestamp_ms: int, method: str, pat
     `path` is the path component only (e.g. "/trade-api/v2/markets") with no
     query string — strip "?..." before passing it in.
     """
-    message = f"{timestamp_ms}{method.upper()}{path}".encode("utf-8")
+    message = f"{timestamp_ms}{method.upper()}{path}".encode()
     signature = private_key.sign(
         message,
         padding.PSS(

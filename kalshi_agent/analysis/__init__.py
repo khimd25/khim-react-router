@@ -1,3 +1,3 @@
-from . import stats, calibration
+from . import calibration, stats
 
-__all__ = ["stats", "calibration"]
+__all__ = ["calibration", "stats"]

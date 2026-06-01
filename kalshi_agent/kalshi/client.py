@@ -10,7 +10,6 @@ Docs: https://docs.kalshi.com  (fetch /llms.txt for the full endpoint index)
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urlencode
 
 import requests
 

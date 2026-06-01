@@ -10,8 +10,8 @@ into a personal consultant that knows how *you* trade.
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS trades (
@@ -50,7 +50,7 @@ class Trade:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class JournalStore:
@@ -146,4 +146,4 @@ class JournalStore:
 
 
 def _row_to_trade(row: sqlite3.Row) -> Trade:
-    return Trade(**{k: row[k] for k in row.keys()})
+    return Trade(**{k: row[k] for k in row.keys()})  # noqa: SIM118
