@@ -1,0 +1,16 @@
+# Secrets & credentials — NEVER commit these
+.env
+*.pem
+*.key
+
+# Local trade journal (your private data)
+journal.db
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
